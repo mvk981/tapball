@@ -1,4 +1,3 @@
-// import 'home.dart';
 import 'dart:io';
 import 'dart:math';
 import 'dart:core';
@@ -68,7 +67,8 @@ class _HomeState extends State<Home> {
   int ball_x = 0;
   int ball_y = 0;
 
-  // bool goal;
+  bool won = false;
+  bool lose = false;
 
   bool onToachEventEnable = true;
   var rgen = new Random();
@@ -78,14 +78,12 @@ class _HomeState extends State<Home> {
   List<Point> bestStepSeries = [];
   List<Point> userStepSeries = [];
 
-  // @override
   void setVectorState(int x, int y, int vx, int vy, int value) {
     vectors[x + maxX][y + maxY][vx + 1][vy + 1] = value;
     if (x + vx >= minX && x + vx <= maxX && y + vy >= minY && y + vy <= maxY)
       vectors[x + maxX + vx][y + maxY + vy][-vx + 1][-vy + 1] = value;
   }
 
-  // @override
   int getVectorState(int x, int y, int vx, int vy) {
     if ((x == 0 && y == minY + 1 && vy == 1) ||
         (x == 0 && y == maxY - 1 && vy == -1))
@@ -135,51 +133,17 @@ class _HomeState extends State<Home> {
       return false;
   }
 
-  // @override
   double PointToChoord(int point, int max) {
     return (field_indent + cell_size * max + point * cell_size).toDouble();
   }
 
   List<int> getDirectionY(int y, bool user) {
-    // if (user) {
-    //   if (y > minY + 1) {
-    //     List<int> result = [-1, 0, 1];
-    //     return result;
-    //   } else if (y < minY + 1) {
-    //     List<int> result = [1, 0, -1];
-    //     return result;
-    //   } else {
-    //     List<int> result = [0, 1, -1];
-    //     return result;
-    //   }
-    // } else {
-    //   if (y < maxY - 1) {
-    //     List<int> result = [1, 0, -1];
-    //     return result;
-    //   } else if (y > maxY - 1) {
-    //     List<int> result = [-1, 0, 1];
-    //     return result;
-    //   } else {
-    //     List<int> result = [0, -1, 1];
-    //     return result;
-    //   }
-    // }
     if (user) {
-      if (y >= minY + 1) {
-        List<int> result = [-1, 0, 1];
-        return result;
-      } else {
-        List<int> result = [1];
-        return result;
-      }
+      List<int> result = [-1, 0, 1];
+      return result;
     } else {
-      if (y <= maxY - 1) {
-        List<int> result = [1, 0, -1];
-        return result;
-      } else {
-        List<int> result = [-1];
-        return result;
-      }
+      List<int> result = [1, 0, -1];
+      return result;
     }
   }
 
@@ -216,7 +180,9 @@ class _HomeState extends State<Home> {
     bool goal = false;
     for (int vy in getDirectionY(y, user)) {
       for (int vx in getDirectionX(x)) {
-        if (goal) return goal;
+        if (goal) {
+          return goal;
+        }
         if (vx == 0 && vy == 0) continue;
         if (isGoal(x + vx, y + vy, vy, user)) {
           if (!user) {
@@ -224,10 +190,6 @@ class _HomeState extends State<Home> {
             currStepSeries.add(vector);
             SaveBestSeries(user);
           }
-          // else {
-          //   Point vector = new Point(vx, vy);
-          //   userStepSeries.add(vector);
-          // }
           return true;
         }
         int state = getVectorState(x, y, vx, vy);
@@ -240,6 +202,7 @@ class _HomeState extends State<Home> {
         else
           userStepSeries.add(vector);
         setVectorState(x, y, vx, vy, _ANALYSED_);
+
         if (!isStepOver(x + vx, y + vy)) {
           if (!user) {
             if (recursion_depth < difficulty) {
@@ -255,23 +218,23 @@ class _HomeState extends State<Home> {
         } else {
           if (!user) {
             userStepSeries.clear();
-            // if (!AnalyseSteps(x + vx, y + vy, true)) {
-            int currCrit = 0;
-            int v1 = max_steps -
-                (max((x + vx).abs(), ((maxY - 1) - (y + vy)).abs()));
-            int v2 = max((x + vx).abs(), ((minY + 1) - (y + vy)).abs());
-            int v3 =
-                (max(((x + vx) - ball_x).abs(), ((y + vy) - ball_y)).abs() *
-                        max_steps /
-                        currStepSeries.length)
-                    .round();
-            int v4 = rgen.nextInt(max_steps);
-            currCrit = v1 * 40 + v2 * 30 + v3 * 29 + v4 * 1;
-            if (currCrit > bestCrit) {
-              SaveBestSeries(user);
-              bestCrit = currCrit;
+            if (!AnalyseSteps(x + vx, y + vy, true)) {
+              int currCrit = 0;
+              int v1 = max_steps -
+                  (max((x + vx).abs(), ((maxY - 1) - (y + vy)).abs()));
+              int v2 = max((x + vx).abs(), ((minY + 1) - (y + vy)).abs());
+              int v3 =
+                  (max(((x + vx) - ball_x).abs(), ((y + vy) - ball_y)).abs() *
+                          max_steps /
+                          currStepSeries.length)
+                      .round();
+              int v4 = rgen.nextInt(max_steps);
+              currCrit = v1 * 40 + v2 * 30 + v3 * 29 + v4 * 1;
+              if (currCrit > bestCrit) {
+                SaveBestSeries(user);
+                bestCrit = currCrit;
+              }
             }
-            // }
           }
         }
         if (!user)
@@ -302,6 +265,9 @@ class _HomeState extends State<Home> {
 
       ball_x = 0;
       ball_y = 0;
+
+      won = false;
+      lose = false;
 
       vectors = List.generate(
           maxX * 2 + 1,
@@ -419,10 +385,9 @@ class _HomeState extends State<Home> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          // if (goal) {
-          //   return initGame();
-          // }
-          if (await confirm(
+          if (won || lose) {
+            return initGame();
+          } else if (await confirm(
             context,
             title: Text('Restart game'),
             content: Text('Are you sure?'),
@@ -470,8 +435,6 @@ class _HomeState extends State<Home> {
 
     var x = details.localPosition.dx;
     var y = details.localPosition.dy;
-    bool won = false;
-    bool lose = false;
 
     // get direction
     int vx = 0;
@@ -572,15 +535,19 @@ class _HomeState extends State<Home> {
       stepOver = false;
     }
     if (won)
-      alert(context,
-          title: Text('Congratulations'),
-          content: Text('You won!'),
-          textOK: Text('ok'));
+      await Future.delayed(const Duration(milliseconds: 200), () {
+        alert(context,
+            title: Text('Congratulations'),
+            content: Text('You won!'),
+            textOK: Text('ok'));
+      });
     if (lose)
-      alert(context,
-          title: Text('Congratulations'),
-          content: Text('You lose!'),
-          textOK: Text('ok'));
+      await Future.delayed(const Duration(milliseconds: 200), () {
+        alert(context,
+            title: Text('Congratulations'),
+            content: Text('You lose!'),
+            textOK: Text('ok'));
+      });
   }
 }
 
