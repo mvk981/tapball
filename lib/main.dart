@@ -11,8 +11,16 @@ import 'package:alert_dialog/alert_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:flutter/cupertino.dart';
+// import 'package:window_size/window_size.dart';
 
-void main() => runApp(App());
+void main() {
+  // if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+  //   setWindowTitle("My Desktop App");
+  //   setWindowMinSize(Size(375, 750));
+  //   setWindowMaxSize(Size(600, 1000));
+  // }
+  runApp(App());
+}
 
 class App extends StatelessWidget {
   @override
@@ -60,7 +68,7 @@ class _HomeState extends State<Home> {
   int difficulty;
   bool stepOver = false;
 
-  int bestCrit = 0;
+  double bestCrit = 0;
   int recursion_depth = 0;
   int user_recursion_depth = 0;
 
@@ -219,18 +227,25 @@ class _HomeState extends State<Home> {
           if (!user) {
             userStepSeries.clear();
             if (!AnalyseSteps(x + vx, y + vy, true)) {
-              int currCrit = 0;
-              int v1 = max_steps -
-                  (max((x + vx).abs(), ((maxY - 1) - (y + vy)).abs()));
-              int v2 = max((x + vx).abs(), ((minY + 1) - (y + vy)).abs());
-              int v3 =
-                  (max(((x + vx) - ball_x).abs(), ((y + vy) - ball_y)).abs() *
-                          max_steps /
-                          currStepSeries.length)
-                      .round();
-              int v4 = rgen.nextInt(max_steps);
-              currCrit = v1 * 40 + v2 * 30 + v3 * 29 + v4 * 1;
+              // int currCrit = 0;
+              // int v1 = max_steps -
+              //     (max((x + vx).abs(), ((maxY - 1) - (y + vy)).abs()));
+              // int v2 = max((x + vx).abs(), ((minY + 1) - (y + vy)).abs());
+              // int v3 =
+              //     (max(((x + vx) - ball_x).abs(), ((y + vy) - ball_y)).abs() *
+              //             max_steps /
+              //             currStepSeries.length)
+              //         .round();
+              // int v4 = rgen.nextInt(max_steps);
+              // currCrit = v1 * 40 + v2 * 30 + v3 * 29 + v4 * 1;
+              int dy = maxY + y + vy;
+              int dx = (x + vx).abs();
+              double currCrit = dy -
+                  dx / 2 +
+                  // 1 / currStepSeries.length +
+                  rgen.nextDouble() / 10;
               if (currCrit > bestCrit) {
+                print(currCrit);
                 SaveBestSeries(user);
                 bestCrit = currCrit;
               }
@@ -519,13 +534,20 @@ class _HomeState extends State<Home> {
       difficulty = save_difficulty - 2;
       do {
         difficulty++;
+        if (difficulty > 9) break;
         lose = AnalyseSteps(ball_x, ball_y, false);
+        print(difficulty + 1);
       } while (bestStepSeries.length == 0);
 
-      for (int i = 0; i < bestStepSeries.length; i++) {
-        await Future.delayed(const Duration(milliseconds: 200), () {
-          MoveBall(bestStepSeries[i].x, bestStepSeries[i].y, _USED_);
-        });
+      if (bestStepSeries.length == 0) {
+        won = true;
+        onToachEventEnable = false;
+      } else {
+        for (int i = 0; i < bestStepSeries.length; i++) {
+          await Future.delayed(const Duration(milliseconds: 200), () {
+            MoveBall(bestStepSeries[i].x, bestStepSeries[i].y, _USED_);
+          });
+        }
       }
       if (lose) {
         onToachEventEnable = false;
